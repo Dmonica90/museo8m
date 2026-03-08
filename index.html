@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Museo 8M - Pioneras</title>
+    <link rel="icon" type="image/png" href="assets/diamante.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Delius&family=Roboto:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser-arcade-physics.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #1a0926;
+            overflow: hidden;
+            font-family: sans-serif;
+            touch-action: none;
+            background-image: linear-gradient(rgba(215, 153, 220, 0.7), rgba(105, 22, 135, 0.528)), url('assets/background.png');
+
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* --- ESTILOS DEL CONTADOR --- */
+        #ui-contador {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 50;
+            /* Por encima del juego, pero debajo de los pop-ups */
+            background: linear-gradient(0deg, rgba(133, 73, 214, 1) 0%, rgba(159, 9, 176, 1) 100%);
+            /* Morado base */
+
+            /* Borde brillante */
+            border-radius: 30px;
+            padding: 5px 20px 5px 10px;
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 900;
+            font-style: italic;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .icono-diamante {
+            font-size: 30px;
+            margin-right: 15px;
+            filter: drop-shadow(0 0 5px #ff80ab);
+        }
+
+        .icono-diamante img {
+            width: 18px;
+            height: 28px;
+        }
+
+        /* --- ESTILOS DE LA PANTALLA FINAL --- */
+        #pantalla-final {
+            display: none;
+            /* Oculta hasta ganar */
+            position: absolute;
+            z-index: 100;
+            width: 100%;
+            height: 100%;
+            background: rgba(26, 9, 38, 0.95);
+            color: white;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #pantalla-final .btn-continuar {
+
+            box-shadow: 3px 5px 6px 0px #1677ab;
+            background: linear-gradient(to bottom, #7a81ff 5%, #3ba0e3 100%);
+            background-color: #7a81ff;
+            border-radius: 21px;
+            display: inline-block;
+            cursor: pointer;
+            color: #ffffff;
+            font-family: Arial;
+            font-size: 15px;
+            padding: 8px 34px;
+            text-decoration: none;
+            text-shadow: 0px 1px 0px #9c54cc;
+        }
+
+        #pantalla-final .btn-continuar:hover {
+            background: linear-gradient(to bottom, #3ba0e3 5%, #7a81ff 100%);
+            background-color: #3ba0e3;
+        }
+
+        #pantalla-final .btn-continuar:active {
+            position: relative;
+            top: 1px;
+        }
+
+
+        #game-container {
+            position: absolute;
+            z-index: 1;
+
+            /* 1. Lo centramos perfectamente en la pantalla */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+
+            /* 2. Le decimos que intente ocupar todo el espacio... */
+            width: 100%;
+            height: 100%;
+
+            /* 3. ¡EL FRENO! Limitamos su tamaño máximo para escritorio */
+            max-width: 1200px;
+            max-height: 600px;
+            /* Mantiene la proporción 2:1 de tu cámara */
+
+            /* Opcional: Le da un toque premium como si fuera una pantalla física */
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            /* Redondea las esquinas solo un poquito */
+            overflow: hidden;
+        }
+
+        /* PANTALLA DE ORIENTACIÓN */
+        #aviso-orientacion {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a0926;
+            color: white;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #aviso-orientacion img {
+            width: 90px;
+            height: 70px;
+            margin: 0;
+        }
+
+        @media screen and (max-width: 768px) and (orientation: portrait) {
+            #aviso-orientacion {
+                display: flex;
+            }
+
+            #pantalla-inicio,
+            #controles-moviles,
+            #game-container {
+                display: none !important;
+            }
+        }
+
+        /* PANTALLA DE INICIO */
+        #pantalla-inicio {
+            position: absolute;
+            z-index: 100;
+            width: 100%;
+            height: 100%;
+            background-image: url('assets/background.png');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+
+            /* 👇 NUEVO: Un "colchón" para que nada toque las orillas del celular */
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* 👇 NUEVO: Títulos mágicos que se encogen en celular */
+        #pantalla-inicio h1 {
+            /* Mínimo 32px en celular, ideal 6vw, máximo 60px en escritorio */
+            font-size: clamp(32px, 6vw, 60px);
+            margin-top: 0;
+            margin-bottom: 10px;
+            line-height: 1.1;
+            /* Para que si cae en dos renglones no se vea tan separado */
+        }
+
+        #pantalla-inicio p {
+            /* Mínimo 14px, ideal 3vw, máximo 18px */
+            font-size: clamp(14px, 3vw, 18px);
+            margin-bottom: 20px;
+            max-width: 600px;
+            /* Evita que el texto sea una línea larguísima en PC */
+        }
+
+        /* Opcional: Para que tu imagen de controles no sea tan gigante en PC */
+        .img-controles {
+            width: 100%;
+            max-width: 350px;
+
+            /* 👇 EL FRENO DE ALTURA 👇 */
+            /* Le decimos que NUNCA ocupe más del 30% de la altura de la pantalla */
+            max-height: 30vh;
+
+            /* Esto asegura que la imagen se escale bonito sin aplastarse ni deformarse */
+            object-fit: contain;
+
+            margin: 0 auto 20px auto;
+        }
+
+        .btn-jugar {
+            box-shadow: 3px 5px 6px 0px #6316ab;
+            background: linear-gradient(to bottom, #ce7aff 5%, #6139e3 100%);
+            background-color: #ce7aff;
+            border-radius: 24px;
+            display: inline-block;
+            cursor: pointer;
+            color: #ffffff;
+            font-family: Arial;
+            font-size: 12px;
+            padding: 12px 11px;
+            text-decoration: none;
+            text-shadow: 0px 1px 0px #9c54cc;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn-jugar:hover {
+            background: linear-gradient(to bottom, #6139e3 5%, #ce7aff 100%);
+            background-color: #6139e3;
+        }
+
+        .btn-jugar:active {
+            position: relative;
+            top: 1px;
+        }
+
+        @media (hover: hover) {
+            .btn-jugar:hover {
+                background: linear-gradient(to bottom, #6139e3 5%, #ce7aff 100%);
+                background-color: #6139e3;
+            }
+        }
+
+
+
+        /* 3. CONTROLES MÓVILES (Con tus propios gráficos) */
+        #controles-moviles {
+            position: absolute;
+            z-index: 50;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .btn-control {
+            position: absolute;
+            width: 50px;
+            /* Ajusta este tamaño según qué tan grandes quieras tus botones */
+            height: 50px;
+            pointer-events: auto;
+            user-select: none;
+            cursor: pointer;
+            font-family: 'Roboto', sans-serif;
+            /* Magia para las imágenes: */
+            background-color: transparent;
+            /* Quitamos el fondo morado */
+            border: none;
+            /* Quitamos el borde */
+            color: transparent;
+            /* Ocultamos las flechas de texto (◄, ►, ▲) */
+            background-size: contain;
+            /* Hace que tu imagen encaje perfecto sin deformarse */
+            background-repeat: no-repeat;
+            background-position: center;
+            transition: transform 0.1s;
+            /* Para que la animación al tocar sea suave */
+        }
+
+        /* Efecto "Game Boy": Cuando lo tocas, se hace un poquito más pequeño */
+        .btn-control:active {
+            transform: scale(0.9);
+        }
+
+        /* Aquí conectamos cada botón con su respectiva imagen PNG */
+        #btn-izq {
+            bottom: 20px;
+            left: 20px;
+            background-image: url('assets/btn-izq.png');
+        }
+
+        #btn-der {
+            bottom: 20px;
+            left: 110px;
+            background-image: url('assets/btn-der.png');
+        }
+
+        #btn-salto {
+            bottom: 20px;
+            right: 20px;
+            background-image: url('assets/btn-salto.png');
+        }
+
+        .oculto {
+            display: none !important;
+        }
+
+        /* --- ESTILOS DEL POP-UP --- */
+        #popup-pionera {
+            display: none;
+            /* JS lo cambiará a flex cuando choques */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            width: 90%;
+            max-width: 900px;
+            background: rgba(45, 15, 66, 0.95);
+            border: 4px solid #b388ff;
+            border-radius: 12px;
+            color: white;
+            box-shadow: 0 0 40px rgba(179, 136, 255, 0.6);
+            padding: 20px;
+            align-items: center;
+            gap: 20px;
+            font-family: 'Delius', sans-serif;
+        }
+
+        #popup-pionera h2 {
+            margin: 0;
+            color: #f290ff;
+            font-size: 1.4rem;
+            font-family: 'Delius', cursive;
+        }
+
+        /* Las 3 columnas del Pop-up */
+        .foto-container {
+            width: 250px;
+            height: 300px;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .foto-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .spline-container {
+            width: 200px;
+            height: 250px;
+            flex-shrink: 0;
+        }
+
+        .info-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        h1 {
+            margin: 0;
+            color: #571091;
+            font-size: 5rem;
+            font-family: 'Delius', cursive;
+        }
+
+        h2 {
+            margin: 0 0 10px 0;
+            color: #5615a5;
+            font-size: 3rem;
+            font-family: 'Delius', cursive;
+        }
+
+        p {
+            font-size: 1.2rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .btn-continuar {
+            box-shadow: 3px 5px 6px 0px #1677ab;
+            background: linear-gradient(to bottom, #7a81ff 5%, #3ba0e3 100%);
+            background-color: #7a81ff;
+            border-radius: 21px;
+            display: inline-block;
+            cursor: pointer;
+            color: #ffffff;
+            font-family: Arial;
+            font-size: 15px;
+            padding: 13px 9px;
+            text-decoration: none;
+            text-shadow: 0px 1px 0px #9c54cc;
+        }
+
+        .btn-continuar:hover {
+            background: linear-gradient(to bottom, #3ba0e3 5%, #7a81ff 100%);
+            background-color: #3ba0e3;
+        }
+
+        .btn-continuar:active {
+            position: relative;
+            top: 1px;
+        }
+
+        @media (hover: hover) {
+            .btn-continuar:hover {
+                background: linear-gradient(to bottom, #3ba0e3 5%, #7a81ff 100%);
+                background-color: #3ba0e3;
+            }
+        }
+
+
+        /* --- ESTILOS DEL BOTÓN DE AUDIO --- */
+        #btn-audio {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 50;
+            width: 50px;
+            /* Tamaño total del botón interactivo */
+            height: 50px;
+            background: transparent;
+
+            /* 👇 LOS 3 TRUCOS PARA LIMPIAR EL BOTÓN 👇 */
+            border: none;
+            /* Adiós al borde gris del navegador */
+            padding: 0;
+            /* Adiós al espacio interno por defecto */
+            outline: none;
+            /* Quita el recuadro azul cuando le haces clic */
+
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #btn-audio img {
+            /* 👇 HACEMOS QUE LA IMAGEN LLENE LA CAJA 👇 */
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            /* Se asegura de que no se deforme si no es un cuadrado perfecto */
+        }
+
+        #btn-audio:hover {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
+
+        /* Agrega esto al final de tus estilos */
+        #video-ganador {
+            max-width: 600px;
+            /* Para que no se haga gigante en computadora */
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(225, 190, 231, 0.5);
+            /* Un brillo morado */
+            margin-bottom: 20px;
+            background-color: #000;
+            /* Por si tarda en cargar, se ve negro elegante */
+        }
+
+        /* FIRMA DE LA CREADORA */
+        #firma-creadora {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            color: rgba(255, 255, 255, 0.6); /* Blanco semi-transparente */
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            z-index: 1000; /* Siempre por encima de todo */
+            pointer-events: none; /* No estorba los clics */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8); /* Sombra para que se lea siempre */
+        }
+    </style>
+</head>
+
+<body>
+    <div id="firma-creadora">Creado con 💜 por Mónica V.</div>
+
+    <div id="aviso-orientacion">
+        <h1 style="font-size: 50px; font-family: 'Delius', cursive; margin: 0;"><img src="assets/giro_movil.png"
+                alt="Gira tu dispositivo"></h1>
+        <h2 style="font-family: 'Delius', cursive;">Por favor, gira tu dispositivo</h2>
+        <p style="font-family: 'Delius', sans-serif;">Esta experiencia está diseñada para jugarse en formato horizontal.
+        </p>
+    </div>
+
+    <div id="pantalla-inicio">
+        <h1>El Museo de las Pioneras</h1>
+        <p>Usa las flechas para moverte y saltar.<br>Encuentra los diamantes sobre los cuadros para descubrir la
+            historia.</p>
+
+        <img src="assets/flechas_1.png" class="img-controles" alt="Controles">
+
+        <button class="btn-jugar" onclick="iniciarJuego()">COMENZAR RECORRIDO</button>
+    </div>
+    <div id="ui-contador">
+        <span class="icono-diamante"><img src="assets/diamante.png" alt="Diamante"></span>
+        <span id="texto-contador">0/4</span>
+    </div>
+    <button id="btn-audio" onclick="toggleAudio()"><img src="assets/sound.png" alt="Audio"></button>
+
+    <div id="controles-moviles" style="display: none;">
+        <div id="btn-izq" class="btn-control">◄</div>
+        <div id="btn-der" class="btn-control">►</div>
+        <div id="btn-salto" class="btn-control">▲</div>
+    </div>
+
+    <div id="game-container"></div>
+
+    <div id="popup-pionera">
+        <div class="foto-container">
+            <img id="img-pionera" src="assets/Ada Lovelace.png" alt="Ada Lovelace">
+        </div>
+
+        <div class="spline-container">
+            <iframe src="https://my.spline.design/untitled-AdOvNMf8uG0tnS07i5sCVzol-I9C/" frameborder="0" width="100%"
+                height="100%"></iframe>
+        </div>
+
+        <div class="info-container">
+            <h2 id="titulo-pionera">Ada Lovelace</h2>
+            <p id="texto-pionera">Considerada la primera programadora de la historia (1843). Ella imaginó que las
+                computadoras podrían ir más allá de los números y crear arte.</p>
+            <button class="btn-continuar" onclick="cerrarPopup()">Recolectar y Seguir </button>
+        </div>
+    </div>
+    <div id="pantalla-final" class="pantalla">
+
+        <video id="video-ganador" width="100%" playsinline>
+            <source src="assets/video_final.mp4" type="video/mp4">
+            Tu navegador no soporta videos.
+        </video>
+
+        <button class="btn-continuar" onclick="reiniciarJuego()">Volver a jugar </button>
+
+    </div>
+    <script src="script.js"></script>
+
+</body>
+
+</html>
