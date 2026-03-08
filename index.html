@@ -469,17 +469,20 @@
         }
 
         /* Agrega esto al final de tus estilos */
+      /* EL VIDEO FINAL */
         #video-ganador {
-            max-width: 600px;
-            /* Para que no se haga gigante en computadora */
+            width: 100%;
+            max-width: 600px; /* Para que no se haga gigante en computadora */
+            
+            /* 👇 LA CLAVE: Nunca ocupará más del 65% de la altura de la pantalla 👇 */
+            max-height: 65vh; 
+            object-fit: contain; /* Asegura que el video mantenga su proporción sin deformarse */
+            
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(225, 190, 231, 0.5);
-            /* Un brillo morado */
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             background-color: #000;
-            /* Por si tarda en cargar, se ve negro elegante */
         }
-
         /* FIRMA DE LA CREADORA */
         #firma-creadora {
             position: absolute;
@@ -520,7 +523,10 @@
                 gap: 10px !important;
                 overflow-y: auto !important; /* Por si la pantalla es enana, deja deslizar */
             }
-            
+            #video-ganador {
+                max-height: 70dvh !important; /* Más chaparrito en celular */
+                margin-bottom: 10px !important;
+            }
             /* Achicamos la foto y el diamante 3D para que dejen espacio al texto */
             .foto-container { width: 120px !important; height: 160px !important; }
             .spline-container { width: 120px !important; height: 160px !important; }
