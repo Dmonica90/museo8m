@@ -24,7 +24,7 @@
             overflow: hidden;
             font-family: sans-serif;
             touch-action: none;
-            background-image: linear-gradient(rgba(215, 153, 220, 0.7), rgba(105, 22, 135, 0.528)), url('assets/background.png');
+            background-image: linear-gradient(rgba(215, 153, 220, 0.7), rgba(105, 22, 135, 0.528)), url('assets/Background.png');
 
             background-size: cover;
             background-position: center;
@@ -491,6 +491,43 @@
             z-index: 1000; /* Siempre por encima de todo */
             pointer-events: none; /* No estorba los clics */
             text-shadow: 1px 1px 2px rgba(0,0,0,0.8); /* Sombra para que se lea siempre */
+        }
+
+        /* =========================================
+           📱 PARCHE SUPREMO PARA CELULARES HORIZONTALES
+           ========================================= */
+        @media screen and (max-height: 450px) {
+            
+            /* 1. Altura dinámica para evadir las barras de Safari/Chrome */
+            body, html { height: 100dvh !important; }
+            #pantalla-inicio, #pantalla-final { 
+                height: 100dvh !important; 
+                justify-content: center !important;
+            }
+
+            /* --- Ajustes Pantalla de Inicio --- */
+            #pantalla-inicio { padding: 5px 20px !important; }
+            #pantalla-inicio h1 { font-size: 26px !important; margin-bottom: 5px !important; }
+            #pantalla-inicio p { font-size: 14px !important; margin-bottom: 5px !important; line-height: 1.2 !important; }
+            .img-controles { max-height: 35vh !important; margin-bottom: 10px !important; }
+            .btn-jugar { padding: 10px 25px !important; font-size: 14px !important; margin-top: 0 !important; }
+
+            /* --- Ajustes Pop-up Pioneras --- */
+            #popup-pionera {
+                height: 85dvh !important; /* Evita que se salga por arriba o abajo */
+                width: 95% !important;
+                padding: 10px 15px !important;
+                gap: 10px !important;
+                overflow-y: auto !important; /* Por si la pantalla es enana, deja deslizar */
+            }
+            
+            /* Achicamos la foto y el diamante 3D para que dejen espacio al texto */
+            .foto-container { width: 120px !important; height: 160px !important; }
+            .spline-container { width: 120px !important; height: 160px !important; }
+            
+            .info-container h2 { font-size: 1.5rem !important; margin-bottom: 5px !important; }
+            .info-container p { font-size: 0.9rem !important; margin-bottom: 10px !important; line-height: 1.3 !important; }
+            .btn-continuar { padding: 8px 20px !important; font-size: 14px !important; margin-top: 0 !important; }
         }
     </style>
 </head>
